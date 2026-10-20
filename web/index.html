@@ -78,18 +78,18 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .dfacts .no::before{content:"✗";color:var(--muted);font-weight:800}
 .dfacts .no{color:var(--muted)}
 /* controls */
-.controls{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;gap:10px;background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:12px 14px;box-shadow:0 6px 20px rgb(20 30 60 / .08);max-width:calc(100% - 32px)}
-.c-label{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.controls{position:absolute;left:16px;bottom:16px;display:flex;flex-direction:column;gap:7px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:9px 11px;box-shadow:0 6px 20px rgb(20 30 60 / .08);max-width:calc(100% - 32px)}
+.c-label{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .stepper{display:flex;align-items:center;gap:10px}
-.stepper button{width:52px;height:52px;border-radius:14px;border:0;background:var(--accent);color:var(--on-accent);font:800 30px/1 var(--display);cursor:pointer;display:grid;place-items:center;padding-top:4px}
+.stepper button{width:40px;height:40px;border-radius:11px;border:0;background:var(--accent);color:var(--on-accent);font:800 26px/1 var(--display);cursor:pointer;display:grid;place-items:center;padding-top:4px}
 .stepper button:disabled{opacity:.3;cursor:not-allowed}
 .stepper button:not(:disabled):active{transform:translateY(1px)}
-#count{min-width:48px;text-align:center;font:800 40px/1 var(--display);font-variant-numeric:tabular-nums;padding-top:6px}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.chip{border:1px solid var(--line);background:var(--accent-soft);color:var(--ink);font:700 13px var(--body);padding:7px 12px;border-radius:99px;cursor:pointer}
+#count{min-width:40px;text-align:center;font:800 32px/1 var(--display);font-variant-numeric:tabular-nums;padding-top:6px}
+.row{display:flex;gap:6px 10px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--accent-soft);color:var(--ink);font:700 12px var(--body);padding:5px 10px;border-radius:99px;cursor:pointer}
 .chip:hover{border-color:var(--accent)}
-.tog{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
-.tog input{accent-color:var(--accent);width:16px;height:16px}
+.tog{display:flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer}
+.tog input{accent-color:var(--accent);width:14px;height:14px;margin:0}
 button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 
 /* panel */
@@ -212,7 +212,7 @@ const fmt=x=>x.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDi
 const f=x=>+x.toFixed(4);
 
 const state={n:4,pts:[{x:-4,y:2},{x:4,y:2},{x:2,y:-2},{x:-3,y:-2}],snap:true,par:true,diag:false,ext:false,drag:-1,hover:-1,dragLabel:null,hoverLabel:null,lstart:null,off:{x:0,y:0}};
-const view={W:16,H:11};
+const view={W:16,H:11,y0:-5.5,y1:5.5,Hf:9};
 let prevSig=[],flashAt=[],firstRender=true,pending=false,lastName='';
 
 /* ---------- geometry ---------- */
@@ -258,12 +258,12 @@ function analyze(P){
 
 /* ---------- shapes ---------- */
 function regularShape(n){
-  const R=Math.max(2.6,Math.min(view.W,view.H)*.34),st=Math.PI/2+Math.PI/n,pts=[];
+  const R=Math.max(2.4,Math.min(view.W,view.Hf)*.36),st=Math.PI/2+Math.PI/n,pts=[];
   for(let i=0;i<n;i++){const a=st+i*TAU/n;pts.push({x:R*Math.cos(a),y:R*Math.sin(a)})}
   return pts;
 }
 function randomShape(n){
-  const R=Math.max(2.6,Math.min(view.W,view.H)*.35);
+  const R=Math.max(2.4,Math.min(view.W,view.Hf)*.36);
   for(let t=0;t<80;t++){
     const base=Math.random()*TAU,pts=[];
     for(let i=0;i<n;i++){const a=base+i*TAU/n+(Math.random()-.5)*(TAU/n)*.55,r=R*(.72+Math.random()*.28);pts.push({x:Math.round(r*Math.cos(a)),y:Math.round(r*Math.sin(a))})}
@@ -575,8 +575,8 @@ svg.addEventListener('pointermove',e=>{
   }
   let x=w.x+state.off.x,y=w.y+state.off.y;
   if(state.snap){x=Math.round(x);y=Math.round(y)}
-  const mx=view.W/2-.6,my=view.H/2-.6;
-  x=Math.max(-mx,Math.min(mx,x));y=Math.max(-my,Math.min(my,y));
+  const mx=view.W/2-.6;
+  x=Math.max(-mx,Math.min(mx,x));y=Math.max(view.y0+.6,Math.min(view.y1-.6,y));
   if(state.pts.some((p,j)=>j!==state.drag&&Math.hypot(p.x-x,p.y-y)<.3))return;
   const p=state.pts[state.drag];if(p.x===x&&p.y===y)return;
   state.pts[state.drag]={x,y};requestRender();
@@ -606,20 +606,27 @@ document.addEventListener('keydown',e=>{
   if(e.key==='+'||e.key==='='){setN(state.n+1)}else if(e.key==='-'){setN(state.n-1)}
 });
 
+/* çokgen, sol alttaki kutunun üstünde kalan boş alanın ortasına yerleşir */
+const ctrl=document.querySelector('.controls');
 function resize(){
   const r=wrap.getBoundingClientRect();if(!r.width||!r.height)return;
-  const unit=Math.max(26,Math.min(58,Math.min(r.width,r.height)/11));
-  view.W=r.width/unit;view.H=r.height/unit;
-  svg.setAttribute('viewBox',`${-view.W/2} ${-view.H/2} ${view.W} ${view.H}`);
-  gridRect.setAttribute('x',-view.W/2);gridRect.setAttribute('y',-view.H/2);gridRect.setAttribute('width',view.W);gridRect.setAttribute('height',view.H);
+  const over=getComputedStyle(ctrl).position==='absolute';
+  const ch=over?Math.min(ctrl.getBoundingClientRect().height+20,r.height*.5):0;
+  const free=r.height-ch;
+  const unit=Math.max(24,Math.min(58,Math.min(r.width,free)/9.5));
+  view.W=r.width/unit;view.H=r.height/unit;view.Hf=free/unit;
+  const S=ch/2/unit;view.y0=-view.H/2+S;view.y1=view.H/2+S;
+  const x0=-view.W/2;
+  svg.setAttribute('viewBox',`${x0} ${view.y0} ${view.W} ${view.H}`);
+  gridRect.setAttribute('x',x0);gridRect.setAttribute('y',view.y0);gridRect.setAttribute('width',view.W);gridRect.setAttribute('height',view.H);
   requestRender();
 }
-new ResizeObserver(resize).observe(wrap);
+const ro=new ResizeObserver(resize);ro.observe(wrap);ro.observe(ctrl);
 $('minus').disabled=false;
 resize();render();
 
 /* ---------- güncelleme ---------- */
-const APP_VERSION='1.4.0';
+const APP_VERSION='1.4.1';
 const UPDATE={owner:'Ekerem',repo:'cokgen-atolyesi'};
 const PAGE_URL=`https://${UPDATE.owner.toLowerCase()}.github.io/${UPDATE.repo}/`;
 const APK_URL=`https://github.com/${UPDATE.owner}/${UPDATE.repo}/releases/latest/download/cokgen-atolyesi.apk`;

@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "apkMin": "1.2.0",
-  "notes": "Dış açıları göster düğmesi eklendi"
+  "notes": "Çokgen artık alttaki kutunun altında kalmıyor"
 }
