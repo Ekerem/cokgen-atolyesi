@@ -6,8 +6,8 @@
 
 ## Nereden açılır
 
-- **Web:** `https://OWNER.github.io/REPO/`
-- **Android (APK):** `https://github.com/OWNER/REPO/releases/latest/download/cokgen-atolyesi.apk`
+- **Web:** `https://ekerem.github.io/cokgen-atolyesi/`
+- **Android (APK):** `https://github.com/Ekerem/cokgen-atolyesi/releases/latest/download/cokgen-atolyesi.apk`
 
 APK, internet varken web sürümünü açar; böylece web'e gelen her değişiklik uygulamaya da gelir. İnternet yoksa içine gömülü kopyayla çalışır.
 
