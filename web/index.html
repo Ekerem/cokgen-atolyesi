@@ -14,7 +14,7 @@
 :root{
   --bg:#E8EDF4; --paper:#FFFFFF; --grid:#D2DDEB; --ink:#1B2740; --muted:#5A6A85; --line:#CBD5E3;
   --accent:#2F5BEA; --accent-soft:#E6EDFE; --on-accent:#FFFFFF; --fill:#2F5BEA;
-  --arc:#F2B200; --arc-ink:#7E5B00; --warn:#C8410B; --warn-soft:#FDEBE2;
+  --arc:#F2B200; --arc-ink:#7E5B00; --ext:#0CA678; --ext-ink:#087F5B; --warn:#C8410B; --warn-soft:#FDEBE2;
   --c1:#E8590C; --c2:#2B9348; --c3:#C2255C; --c4:#7048E8; --c5:#0C8599; --c6:#A06A00;
   --display:"Baloo 2","Trebuchet MS",system-ui,sans-serif;
   --body:"Nunito","Segoe UI",system-ui,sans-serif;
@@ -22,12 +22,12 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0E1522; --paper:#152033; --grid:#23324B; --ink:#E7EDF7; --muted:#97A6BF; --line:#2A3A55;
   --accent:#6F95FF; --accent-soft:#1E2C4A; --on-accent:#0E1522; --fill:#6F95FF;
-  --arc:#FFD43B; --arc-ink:#F3CF6A; --warn:#FF8A5B; --warn-soft:#3A2219;
+  --arc:#FFD43B; --arc-ink:#F3CF6A; --ext:#38D9A9; --ext-ink:#63E6BE; --warn:#FF8A5B; --warn-soft:#3A2219;
   --c1:#FF922B; --c2:#51CF66; --c3:#F06595; --c4:#9775FA; --c5:#22B8CF; --c6:#E9B949; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0E1522; --paper:#152033; --grid:#23324B; --ink:#E7EDF7; --muted:#97A6BF; --line:#2A3A55;
   --accent:#6F95FF; --accent-soft:#1E2C4A; --on-accent:#0E1522; --fill:#6F95FF;
-  --arc:#FFD43B; --arc-ink:#F3CF6A; --warn:#FF8A5B; --warn-soft:#3A2219;
+  --arc:#FFD43B; --arc-ink:#F3CF6A; --ext:#38D9A9; --ext-ink:#63E6BE; --warn:#FF8A5B; --warn-soft:#3A2219;
   --c1:#FF922B; --c2:#51CF66; --c3:#F06595; --c4:#9775FA; --c5:#22B8CF; --c6:#E9B949; color-scheme:dark}
 
 html,body{height:100%}
@@ -51,6 +51,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .chev{fill:none;stroke:var(--muted);stroke-width:.06;stroke-linecap:round;stroke-linejoin:round}
 .arc{fill:var(--arc);fill-opacity:.26;stroke:var(--arc);stroke-width:.05}
 .ra{fill:var(--arc);fill-opacity:.26;stroke:var(--arc-ink);stroke-width:.05}
+.ext-line{fill:none;stroke:var(--ext);stroke-width:.06;stroke-dasharray:.2 .14;stroke-linecap:round}
+.earc{fill:var(--ext);fill-opacity:.22;stroke:var(--ext);stroke-width:.05}
+.et{font:700 .4px var(--body);fill:var(--ext-ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.12px;stroke-linejoin:round}
 .at{font:700 .4px var(--body);fill:var(--arc-ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.12px;stroke-linejoin:round}
 .vl{font:800 .56px var(--display);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.14px;stroke-linejoin:round}
 .dot{fill:var(--paper);stroke:var(--ink);stroke-width:.08}
@@ -58,7 +61,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .hit{fill:transparent}
 .leader{stroke:var(--muted);stroke-width:.035;stroke-dasharray:.09 .09;fill:none}
 .lbox{fill:var(--accent-soft);stroke:var(--accent);stroke-width:.035}
-.at.lon,.dlt.lon,.vl.lon{fill:var(--accent)}
+.at.lon,.dlt.lon,.vl.lon,.et.lon{fill:var(--accent)}
 .gap{stroke:var(--warn);stroke-width:.07;stroke-dasharray:.25 .2;fill:none}
 .gapt{font:800 .45px var(--body);fill:var(--warn);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.14px}
 
@@ -156,6 +159,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
       <button class="chip" id="regular">Düzgün yap</button>
       <button class="chip" id="shuffle">Karıştır</button>
       <button class="chip" id="diagBtn" aria-pressed="false">Köşegenleri göster</button>
+      <button class="chip" id="extBtn" aria-pressed="false">Dış açıları göster</button>
       <button class="chip" id="resetLbl">Yazıları yerine koy</button>
     </div>
     <div class="row">
@@ -178,6 +182,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
   <div class="sum" id="sum"></div>
   <section><h2>Özellikleri</h2><ul id="props"></ul></section>
   <section id="eqSec"><h2>Eşit kenarlar</h2><div id="eqs"></div></section>
+  <section id="extSec" hidden><h2>Dış açılar</h2><div id="ext"></div></section>
   <section id="diagSec" hidden><h2>Köşegenler</h2><div id="diag"></div></section>
   <div class="hint" id="hint"></div>
   <div class="tables">
@@ -206,7 +211,7 @@ const TAU=Math.PI*2,mod=(a,m)=>((a%m)+m)%m;
 const fmt=x=>x.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const f=x=>+x.toFixed(4);
 
-const state={n:4,pts:[{x:-4,y:2},{x:4,y:2},{x:2,y:-2},{x:-3,y:-2}],snap:true,par:true,diag:false,drag:-1,hover:-1,dragLabel:null,hoverLabel:null,lstart:null,off:{x:0,y:0}};
+const state={n:4,pts:[{x:-4,y:2},{x:4,y:2},{x:2,y:-2},{x:-3,y:-2}],snap:true,par:true,diag:false,ext:false,drag:-1,hover:-1,dragLabel:null,hoverLabel:null,lstart:null,off:{x:0,y:0}};
 const view={W:16,H:11};
 let prevSig=[],flashAt=[],firstRender=true,pending=false,lastName='';
 
@@ -385,13 +390,23 @@ function diagPanel(D,m,selfX){
   el.innerHTML=h;
 }
 
+function extPanel(I){
+  const sec=$('extSec');sec.hidden=!state.ext;if(!state.ext)return;
+  const el=$('ext');
+  if(I.selfX){el.innerHTML='<p class="empty">Kenarlar kesişirken dış açılar gösterilmiyor.</p>';return}
+  let h='<p class="empty">Bir kenarı köşeden öteye uzatınca, uzantı ile komşu kenar arasında kalan açı. Her köşede <b style="color:var(--ink)">iç açı + dış açı = 180°</b></p>';
+  h+=`<div class="tbl" style="margin-top:8px">${I.ang.map((a,i)=>{const ia=Math.round(a.deg);return a.deg>=179.5?`<div class="tr"><span class="k">${LET[i]}</span><span class="val">${ia>180?'içe göçük köşe':'düz açı'}</span></div>`:`<div class="tr"><span class="sw" style="background:var(--ext)"></span><span class="k">${LET[i]}</span><span class="val">${ia}° + <b style="color:var(--ext-ink)">${180-ia}°</b> = 180°</span></div>`}).join('')}</div>`;
+  h+=I.convex?`<p class="empty" style="margin-top:8px">Dış açıların toplamı <b style="color:var(--ink)">360°</b>. Şekil nasıl değişirse değişsin bu toplam değişmez.</p>`:`<p class="empty" style="margin-top:8px">İçe göçük köşelerde dış açı çizilmez.</p>`;
+  el.innerHTML=h;
+}
+
 /* ---------- render ---------- */
 function requestRender(){if(!pending){pending=true;requestAnimationFrame(render)}}
 const P2=(p,a,r)=>({x:p.x+r*Math.cos(a),y:p.y+r*Math.sin(a)});
 
 /* sürüklenebilir yazılar: her yazının kendi otomatik yerine göre kaydırması saklanır */
 let labelOff={},labelHits=[];
-const FS={at:.4,dlt:.36,vl:.56};
+const FS={at:.4,dlt:.36,vl:.56,et:.4};
 function lbl(key,cls,x,y,text,anchor){
   const o=labelOff[key]||{x:0,y:0},X=x+o.x,Y=y+o.y,fs=FS[cls];
   const w=String(text).length*fs*.6+.24,hh=fs+.22;
@@ -420,6 +435,7 @@ function render(){
     layer.innerHTML=h;
     panelTwo(P);
     diagPanel(null,2,false);
+    $('extSec').hidden=true;
     return;
   }
   const I=analyze(P),m=I.m;
@@ -444,6 +460,20 @@ function render(){
     const extra=A.deg<40?(40-A.deg)/40*.7:0,tp=P2(p,A.start+A.th/2,r+.42+extra);
     arcText.push(lbl('a'+i,'at',tp.x,tp.y,deg+'°',p));
   });
+  // dış açılar: önceki kenarı köşeden öteye uzat, uzantı ile sonraki kenar arasındaki açı
+  const extText=[];
+  if(state.ext&&!I.selfX)I.ang.forEach((A,i)=>{
+    if(A.deg>=179.5)return;
+    const p=P[i],pr=P[(i-1+m)%m],nx=P[(i+1)%m],lp=I.L[(i-1+m)%m];
+    const aE=Math.atan2(p.y-pr.y,p.x-pr.x),aB=Math.atan2(nx.y-p.y,nx.x-p.x);
+    const ext=Math.min(1.9,Math.max(1.2,lp*.45)),q=P2(p,aE,ext);
+    h+=`<line class="ext-line" x1="${f(p.x)}" y1="${f(p.y)}" x2="${f(q.x)}" y2="${f(q.y)}"/>`;
+    let st=aE,sw=mod(aB-aE,TAU);if(sw>Math.PI){st=aB;sw=TAU-sw}
+    const r=Math.min(.62,ext*.45),s0=P2(p,st,r),s1=P2(p,st+sw,r);
+    if(sw>.005)h+=`<path class="earc" d="M${f(p.x)} ${f(p.y)}L${f(s0.x)} ${f(s0.y)}A${f(r)} ${f(r)} 0 0 1 ${f(s1.x)} ${f(s1.y)}Z"/>`;
+    const deg=180-Math.round(A.deg),extra=sw<.7?(.7-sw)*.8:0,tp=P2(p,st+sw/2,r+.42+extra);
+    extText.push(lbl('e'+i,'et',tp.x,tp.y,deg+'°',p));
+  });
   // kenarlar
   for(let i=0;i<m;i++){
     const a=P[i],b=P[(i+1)%m],g=I.gid[i],col=g>=0?COLORS[g%COLORS.length]:'var(--ink)';
@@ -465,6 +495,7 @@ function render(){
     }
   }
   h+=arcText.join('');
+  h+=extText.join('');
   h+=DS.front;
   // köşeler
   const cx=P.reduce((s,p)=>s+p.x,0)/m,cy=P.reduce((s,p)=>s+p.y,0)/m;
@@ -477,6 +508,7 @@ function render(){
   layer.innerHTML=h;
   panel(I,classify(I));
   diagPanel(D,m,I.selfX);
+  extPanel(I);
   if(animating)requestRender();
 }
 
@@ -566,6 +598,7 @@ $('plus').onclick=()=>setN(state.n+1);
 $('shuffle').onclick=()=>{if(state.n===2)return;state.pts=randomShape(state.n);labelOff={};prevSig=[];flashAt=[];firstRender=true;requestRender()};
 $('regular').onclick=()=>{if(state.n===2)return;state.pts=regularShape(state.n);labelOff={};prevSig=[];flashAt=[];requestRender()};
 $('diagBtn').onclick=e=>{state.diag=!state.diag;e.currentTarget.setAttribute('aria-pressed',state.diag);e.currentTarget.textContent=state.diag?'Köşegenleri gizle':'Köşegenleri göster';requestRender()};
+$('extBtn').onclick=e=>{state.ext=!state.ext;e.currentTarget.setAttribute('aria-pressed',state.ext);e.currentTarget.textContent=state.ext?'Dış açıları gizle':'Dış açıları göster';requestRender()};
 $('snap').onchange=e=>{state.snap=e.target.checked};
 $('par').onchange=e=>{state.par=e.target.checked;requestRender()};
 document.addEventListener('keydown',e=>{
@@ -586,7 +619,7 @@ $('minus').disabled=false;
 resize();render();
 
 /* ---------- güncelleme ---------- */
-const APP_VERSION='1.3.0';
+const APP_VERSION='1.4.0';
 const UPDATE={owner:'Ekerem',repo:'cokgen-atolyesi'};
 const PAGE_URL=`https://${UPDATE.owner.toLowerCase()}.github.io/${UPDATE.repo}/`;
 const APK_URL=`https://github.com/${UPDATE.owner}/${UPDATE.repo}/releases/latest/download/cokgen-atolyesi.apk`;
