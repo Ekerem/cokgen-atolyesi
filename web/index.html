@@ -55,8 +55,10 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15p
 .vl{font:800 .56px var(--display);fill:var(--ink);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.14px;stroke-linejoin:round}
 .dot{fill:var(--paper);stroke:var(--ink);stroke-width:.08}
 .v.on .dot{fill:var(--accent);stroke:var(--accent)}
-.hit{fill:transparent;cursor:grab}
-.v.drag .hit{cursor:grabbing}
+.hit{fill:transparent}
+.leader{stroke:var(--muted);stroke-width:.035;stroke-dasharray:.09 .09;fill:none}
+.lbox{fill:var(--accent-soft);stroke:var(--accent);stroke-width:.035}
+.at.lon,.dlt.lon,.vl.lon{fill:var(--accent)}
 .gap{stroke:var(--warn);stroke-width:.07;stroke-dasharray:.25 .2;fill:none}
 .gapt{font:800 .45px var(--body);fill:var(--warn);text-anchor:middle;dominant-baseline:central;paint-order:stroke;stroke:var(--paper);stroke-width:.14px}
 
@@ -141,7 +143,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
       <rect id="gridRect" fill="url(#gp)"/>
       <g id="layer"></g>
     </svg>
-    <div class="tip">Köşeleri tutup sürükle</div>
+    <div class="tip">Köşeleri ve yazıları tutup sürükle</div>
   </div>
   <div class="controls">
     <div class="c-label">Doğru parçası sayısı</div>
@@ -154,6 +156,7 @@ button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline
       <button class="chip" id="regular">Düzgün yap</button>
       <button class="chip" id="shuffle">Karıştır</button>
       <button class="chip" id="diagBtn" aria-pressed="false">Köşegenleri göster</button>
+      <button class="chip" id="resetLbl">Yazıları yerine koy</button>
     </div>
     <div class="row">
       <label class="tog"><input type="checkbox" id="snap" checked> Kareli zemine yapış</label>
@@ -203,7 +206,7 @@ const TAU=Math.PI*2,mod=(a,m)=>((a%m)+m)%m;
 const fmt=x=>x.toLocaleString('tr-TR',{minimumFractionDigits:1,maximumFractionDigits:1});
 const f=x=>+x.toFixed(4);
 
-const state={n:4,pts:[{x:-4,y:2},{x:4,y:2},{x:2,y:-2},{x:-3,y:-2}],snap:true,par:true,diag:false,drag:-1,hover:-1,off:{x:0,y:0}};
+const state={n:4,pts:[{x:-4,y:2},{x:4,y:2},{x:2,y:-2},{x:-3,y:-2}],snap:true,par:true,diag:false,drag:-1,hover:-1,dragLabel:null,hoverLabel:null,lstart:null,off:{x:0,y:0}};
 const view={W:16,H:11};
 let prevSig=[],flashAt=[],firstRender=true,pending=false,lastName='';
 
@@ -344,7 +347,7 @@ function diagSvg(P,D){
   D.list.forEach((d,k)=>{
     const a=P[d.i],b=P[d.j],u={x:(b.x-a.x)/d.L,y:(b.y-a.y)/d.L},nr={x:-u.y,y:u.x},t=k===0?.27:.73;
     const c={x:a.x+(b.x-a.x)*t+nr.x*.32,y:a.y+(b.y-a.y)*t+nr.y*.32};
-    front+=`<text class="dlt" x="${f(c.x)}" y="${f(c.y)}">${LET[d.i]+LET[d.j]} = ${fmt(d.L)}</text>`;
+    front+=lbl('d'+k,'dlt',c.x,c.y,`${LET[d.i]+LET[d.j]} = ${fmt(d.L)}`,{x:a.x+(b.x-a.x)*t,y:a.y+(b.y-a.y)*t});
   });
   if(D.X){
     const X=D.X;
@@ -386,14 +389,27 @@ function diagPanel(D,m,selfX){
 function requestRender(){if(!pending){pending=true;requestAnimationFrame(render)}}
 const P2=(p,a,r)=>({x:p.x+r*Math.cos(a),y:p.y+r*Math.sin(a)});
 
+/* sürüklenebilir yazılar: her yazının kendi otomatik yerine göre kaydırması saklanır */
+let labelOff={},labelHits=[];
+const FS={at:.4,dlt:.36,vl:.56};
+function lbl(key,cls,x,y,text,anchor){
+  const o=labelOff[key]||{x:0,y:0},X=x+o.x,Y=y+o.y,fs=FS[cls];
+  const w=String(text).length*fs*.6+.24,hh=fs+.22;
+  labelHits.push({key,x:X,y:Y,w,h:hh});
+  const on=state.dragLabel===key||state.hoverLabel===key;
+  let s='';
+  if(anchor&&Math.hypot(o.x,o.y)>.45)s+=`<line class="leader" x1="${f(anchor.x)}" y1="${f(anchor.y)}" x2="${f(X)}" y2="${f(Y)}"/>`;
+  if(on)s+=`<rect class="lbox" x="${f(X-w/2)}" y="${f(Y-hh/2)}" width="${f(w)}" height="${f(hh)}" rx=".14"/>`;
+  return s+`<text class="${cls}${on?' lon':''}" x="${f(X)}" y="${f(Y)}">${text}</text>`;
+}
 function vertexMarkup(p,i,labelPos){
   const on=state.drag===i||state.hover===i,cls='v'+(on?' on':'')+(state.drag===i?' drag':'');
-  return `<g class="${cls}"><circle class="hit" cx="${f(p.x)}" cy="${f(p.y)}" r=".75"/><circle class="dot" cx="${f(p.x)}" cy="${f(p.y)}" r="${on?.32:.24}"/></g><text class="vl" x="${f(labelPos.x)}" y="${f(labelPos.y)}">${LET[i]}</text>`;
+  return `<g class="${cls}"><circle class="hit" cx="${f(p.x)}" cy="${f(p.y)}" r=".75"/><circle class="dot" cx="${f(p.x)}" cy="${f(p.y)}" r="${on?.32:.24}"/></g>`+lbl('v'+i,'vl',labelPos.x,labelPos.y,LET[i],p);
 }
 
 function render(){
   pending=false;
-  const now=performance.now(),P=state.pts,n=state.n;let h='',animating=false;
+  const now=performance.now(),P=state.pts,n=state.n;let h='',animating=false;labelHits=[];
   if(n===2){
     const [a,b,c]=P,cx=(a.x+b.x+c.x)/3,cy=(a.y+b.y+c.y)/3;
     h+=`<line class="gap" x1="${f(c.x)}" y1="${f(c.y)}" x2="${f(a.x)}" y2="${f(a.y)}"/>`;
@@ -426,7 +442,7 @@ function render(){
       h+=`<path class="arc" d="M${f(p.x)} ${f(p.y)}L${f(s0.x)} ${f(s0.y)}A${f(r)} ${f(r)} 0 ${A.th>Math.PI?1:0} 1 ${f(s1.x)} ${f(s1.y)}Z"/>`;
     }
     const extra=A.deg<40?(40-A.deg)/40*.7:0,tp=P2(p,A.start+A.th/2,r+.42+extra);
-    arcText.push(`<text class="at" x="${f(tp.x)}" y="${f(tp.y)}">${deg}°</text>`);
+    arcText.push(lbl('a'+i,'at',tp.x,tp.y,deg+'°',p));
   });
   // kenarlar
   for(let i=0;i<m;i++){
@@ -500,16 +516,31 @@ function panelTwo(P){
 /* ---------- interaction ---------- */
 function toWorld(e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const q=pt.matrixTransform(svg.getScreenCTM().inverse());return {x:q.x,y:q.y}}
 function nearest(w,max){let best=-1,bd=max;state.pts.forEach((p,i)=>{const d=Math.hypot(p.x-w.x,p.y-w.y);if(d<bd){bd=d;best=i}});return best}
+function hitLabel(w,pad){for(let k=labelHits.length-1;k>=0;k--){const L=labelHits[k];if(Math.abs(w.x-L.x)<=L.w/2+pad&&Math.abs(w.y-L.y)<=L.h/2+pad)return L.key}return null}
+function setCursor(){svg.style.cursor=state.drag>=0?'grabbing':state.dragLabel?'move':state.hover>=0?'grab':state.hoverLabel?'move':''}
 svg.addEventListener('pointerdown',e=>{
-  const w=toWorld(e),i=nearest(w,e.pointerType==='mouse'?.7:1);
-  if(i<0)return;
-  state.drag=i;state.off={x:state.pts[i].x-w.x,y:state.pts[i].y-w.y};
+  const w=toWorld(e),mouse=e.pointerType==='mouse';
+  let i=nearest(w,.38),key=null;
+  if(i<0)key=hitLabel(w,mouse?.04:.18);
+  if(i<0&&!key)i=nearest(w,mouse?.7:1);
+  if(i<0&&!key)return;
+  if(key){state.dragLabel=key;const o=labelOff[key]||{x:0,y:0};state.lstart={w,o:{x:o.x,y:o.y}}}
+  else{state.drag=i;state.off={x:state.pts[i].x-w.x,y:state.pts[i].y-w.y}}
   try{svg.setPointerCapture(e.pointerId)}catch(_){}
-  e.preventDefault();requestRender();
+  e.preventDefault();setCursor();requestRender();
 });
 svg.addEventListener('pointermove',e=>{
   const w=toWorld(e);
-  if(state.drag<0){const i=nearest(w,.7);if(i!==state.hover){state.hover=i;requestRender()}return}
+  if(state.dragLabel){
+    let x=state.lstart.o.x+w.x-state.lstart.w.x,y=state.lstart.o.y+w.y-state.lstart.w.y;
+    const d=Math.hypot(x,y),max=3.5;if(d>max){x*=max/d;y*=max/d}
+    labelOff[state.dragLabel]={x,y};requestRender();return;
+  }
+  if(state.drag<0){
+    let i=nearest(w,.38),key=null;if(i<0)key=hitLabel(w,.04);if(i<0&&!key)i=nearest(w,.7);
+    if(i!==state.hover||key!==state.hoverLabel){state.hover=i;state.hoverLabel=key;setCursor();requestRender()}
+    return;
+  }
   let x=w.x+state.off.x,y=w.y+state.off.y;
   if(state.snap){x=Math.round(x);y=Math.round(y)}
   const mx=view.W/2-.6,my=view.H/2-.6;
@@ -518,21 +549,22 @@ svg.addEventListener('pointermove',e=>{
   const p=state.pts[state.drag];if(p.x===x&&p.y===y)return;
   state.pts[state.drag]={x,y};requestRender();
 });
-const end=()=>{if(state.drag>=0){state.drag=-1;requestRender()}};
+const end=()=>{if(state.drag>=0||state.dragLabel){state.drag=-1;state.dragLabel=null;setCursor();requestRender()}};
 svg.addEventListener('pointerup',end);svg.addEventListener('pointercancel',end);
-svg.addEventListener('pointerleave',()=>{if(state.drag<0&&state.hover>=0){state.hover=-1;requestRender()}});
+svg.addEventListener('pointerleave',()=>{if(state.drag<0&&!state.dragLabel&&(state.hover>=0||state.hoverLabel)){state.hover=-1;state.hoverLabel=null;setCursor();requestRender()}});
+$('resetLbl').onclick=()=>{labelOff={};requestRender()};
 
 function setN(n){
   n=Math.max(2,Math.min(12,n));state.n=n;
   state.pts=n===2?twoShape():randomShape(n);
-  prevSig=[];flashAt=[];firstRender=true;
+  prevSig=[];flashAt=[];firstRender=true;labelOff={};
   $('count').textContent=n;$('minus').disabled=n<=2;$('plus').disabled=n>=12;
   requestRender();
 }
 $('minus').onclick=()=>setN(state.n-1);
 $('plus').onclick=()=>setN(state.n+1);
-$('shuffle').onclick=()=>{if(state.n===2)return;state.pts=randomShape(state.n);prevSig=[];flashAt=[];firstRender=true;requestRender()};
-$('regular').onclick=()=>{if(state.n===2)return;state.pts=regularShape(state.n);prevSig=[];flashAt=[];requestRender()};
+$('shuffle').onclick=()=>{if(state.n===2)return;state.pts=randomShape(state.n);labelOff={};prevSig=[];flashAt=[];firstRender=true;requestRender()};
+$('regular').onclick=()=>{if(state.n===2)return;state.pts=regularShape(state.n);labelOff={};prevSig=[];flashAt=[];requestRender()};
 $('diagBtn').onclick=e=>{state.diag=!state.diag;e.currentTarget.setAttribute('aria-pressed',state.diag);e.currentTarget.textContent=state.diag?'Köşegenleri gizle':'Köşegenleri göster';requestRender()};
 $('snap').onchange=e=>{state.snap=e.target.checked};
 $('par').onchange=e=>{state.par=e.target.checked;requestRender()};
@@ -554,7 +586,7 @@ $('minus').disabled=false;
 resize();render();
 
 /* ---------- güncelleme ---------- */
-const APP_VERSION='1.2.0';
+const APP_VERSION='1.3.0';
 const UPDATE={owner:'Ekerem',repo:'cokgen-atolyesi'};
 const PAGE_URL=`https://${UPDATE.owner.toLowerCase()}.github.io/${UPDATE.repo}/`;
 const APK_URL=`https://github.com/${UPDATE.owner}/${UPDATE.repo}/releases/latest/download/cokgen-atolyesi.apk`;

@@ -1,5 +1,5 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "apkMin": "1.2.0",
-  "notes": "Köşegenler ve güncelleme düğmesi eklendi"
+  "notes": "Açı, uzunluk ve harf yazıları sürüklenebilir"
 }
