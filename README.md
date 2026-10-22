@@ -9,7 +9,7 @@
 - **Web:** `https://ekerem.github.io/cokgen-atolyesi/`
 - **Android (APK):** `https://github.com/Ekerem/cokgen-atolyesi/releases/latest/download/cokgen-atolyesi.apk`
 
-APK, internet varken web sürümünü açar; böylece web'e gelen her değişiklik uygulamaya da gelir. İnternet yoksa içine gömülü kopyayla çalışır.
+APK, internet varken web sürümünü açar; böylece web'e gelen her değişiklik uygulamaya da gelir. Açılan son sürüm cihazda saklanır (web/sw.js), internet yokken o açılır.
 
 ## Yeni sürüm nasıl çıkarılır
 

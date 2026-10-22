@@ -626,7 +626,7 @@ $('minus').disabled=false;
 resize();render();
 
 /* ---------- güncelleme ---------- */
-const APP_VERSION='1.4.1';
+const APP_VERSION='1.4.2';
 const UPDATE={owner:'Ekerem',repo:'cokgen-atolyesi'};
 const PAGE_URL=`https://${UPDATE.owner.toLowerCase()}.github.io/${UPDATE.repo}/`;
 const APK_URL=`https://github.com/${UPDATE.owner}/${UPDATE.repo}/releases/latest/download/cokgen-atolyesi.apk`;
@@ -654,6 +654,11 @@ $('upBtn').onclick=()=>checkUpdate(false);
 $('upApply').onclick=()=>{location.href=PAGE_URL+'?v='+Date.now()};
 upMsg(baseMsg());
 checkUpdate(true);
+
+/* çevrimdışı katman: son açılan sürüm cihazda saklanır */
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
 </script>
 </body>
 </html>
